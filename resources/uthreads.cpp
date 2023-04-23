@@ -54,7 +54,7 @@ Thread main_thread;
 id = 0;
 int get_available_id ()
 {
-  if(my_list.empty())
+  if(available_ids.empty())
   {
     return -1;
   }
@@ -115,10 +115,13 @@ int uthread_terminate (int tid)
   }
   else
   {
+    new_available_id = target_thread->id;
     ready_list->remove (target_thread);
     thread_list->remove (target_thread);
     delete[] target_thread.sp;
-    delete target_thread
+    delete target_thread;
+    auto it = std::lower_bound(available_ids.begin(), available_ids.end(), nwe_available_id);
+    available_ids.insert(it, new_available_id);
     return 0;
   }
 }
@@ -140,11 +143,11 @@ int uthread_block (int tid)
                          [&](const Thread& t) { return t.id == tid; });
 
   if (target_thread != thread_list.end()) {
-    if(target_thread.state == Blocked)
+    if(target_thread->state == Blocked)
     {
       return 0;
     }
-    target_thread.state = Blocked;
+    target_thread->state = Blocked;
     ready_list->remove(target_thread);
   } else {
     return -1;
@@ -159,11 +162,11 @@ int uthread_resume(int tid)
                                     [&](const Thread& t) { return t.id == tid; });
 
   if (target_thread != thread_list.end()) {
-    if(target_thread.state != Blocked)
+    if(target_thread->state != Blocked)
     {
       return 0;
     }
-    target_thread.state = Ready;
+    target_thread->state = Ready;
     ready_list->push_back(target_thread);
   } else {
     return -1;

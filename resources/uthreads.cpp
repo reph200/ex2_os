@@ -88,7 +88,11 @@ int uthread_block(int tid)
                          [&](const Thread& t) { return t.id == tid; });
 
   if (it != thread_list.end()) {
-    target_thread
+    if(target_thread.state == Blocked)
+    {
+      return -1;
+    }
+    target_thread.state = Blocked;
   } else {
     return -1;
   }

@@ -103,3 +103,22 @@ int uthread_block(int tid)
   }
   return 0;
 }
+
+
+int uthread_resume(int tid)
+{
+  auto target_thread = std::find_if(thread_list.begin(), thread_list.end(),
+                                    [&](const Thread& t) { return t.id == tid; });
+
+  if (target_thread != thread_list.end()) {
+    if(target_thread.state != Blocked)
+    {
+      return 0;
+    }
+    target_thread.state = Ready;
+    ready_list->push_back(target_thread);
+  } else {
+    return -1;
+  }
+  return 0;
+}

@@ -34,7 +34,7 @@ void setup_thread (int tid, char *stack, thread_entry_point entry_point)
 
 list <Thread> *thread_list;
 list <Thread> *ready_list;
-Thread running_thread;
+Thread *running_thread;
 Thread main_thread;
 
 id = 0;
@@ -50,9 +50,9 @@ int uthread_init (int quantum_usecs)
   {
     return -1;
   }
-  Thread main_thread{next_id, Running};
+  main_thread = {next_id, Running};
   calulate_next_available_id ();
-  running_thread = main_thread;
+  running_thread = &main_thread;
   thread_list = new list<Thread> ()
   ready_list = new list<Thread> ()
   return 0;
@@ -82,18 +82,24 @@ int uthread_block(int tid)
   }
   if (tid == running_thread.id) // blocking itself
   {
-
+    target_thread.state = Blocked;
+    running_thread = &ready_list->front();
+    ready_list->pop_front();
+    running_thread->state = Running;
+    return 0;
   }
   auto target_thread = std::find_if(thread_list.begin(), thread_list.end(),
                          [&](const Thread& t) { return t.id == tid; });
 
-  if (it != thread_list.end()) {
+  if (target_thread != thread_list.end()) {
     if(target_thread.state == Blocked)
     {
-      return -1;
+      return 0;
     }
     target_thread.state = Blocked;
+    ready_list->remove(target_thread);
   } else {
     return -1;
   }
+  return 0;
 }

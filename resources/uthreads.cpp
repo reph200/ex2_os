@@ -3,7 +3,8 @@
 #include <algorithm>
 #include "uthreads.h"
 using namespace std;
-
+//TODO:ERROR messages
+//TODO:actually run and jump from and save threads
 int general_quantom_size;
 int running_remaning_quantom;
 int next_id = 0;
@@ -41,7 +42,7 @@ id = 0;
 void calulate_next_available_id ()
 {
   next_id++;
-  //notice!!!
+  //TODO:notice!!!
 }
 
 int uthread_init (int quantum_usecs)
@@ -121,4 +122,9 @@ int uthread_resume(int tid)
     return -1;
   }
   return 0;
+}
+
+int uthread_get_tid()
+{
+  return running_thread->id;
 }

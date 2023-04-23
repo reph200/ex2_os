@@ -5,10 +5,16 @@
 using namespace std;
 //TODO:ERROR messages
 //TODO:actually run and jump from and save threads
+
+
+typedef unsigned int address_t;
+#define JB_SP 4
+#define JB_PC 5
+
 int general_quantom_size;
 int running_remaning_quantom;
 int next_id = 0;
-
+sigjmp_buff env[MAX_THREAD_NUM];
 enum Thread_State
 {
     Running, Ready, Blocked
@@ -18,6 +24,7 @@ struct Thread
 {
     int id;
     Thread_State state;
+    char *sp;
 
 } Thread;
 
@@ -67,15 +74,46 @@ int uthread_spawn (thread_entry_point entry_point)
   }
   char *stack = new char[STACK_SIZE];
   setup_thread (next_id, stack, entry_point);
-  Thread *new_thread = new Thread (next_id, Ready);
-  thread_list->push_back(new_thread);
-  ready_list->push_back(new_thread);
+  Thread * new_thread = new Thread (next_id, Ready, stack);
+  thread_list->push_back (new_thread);
+  ready_list->push_back (new_thread);
   id = next_id;
   calulate_next_available_id ();
   return id;
 }
 
-int uthread_block(int tid)
+int uthread_terminate (int tid)
+{
+  auto target_thread = std::find_if (thread_list.begin (), thread_list.end (),
+                                     [&] (const Thread &t)
+                                     { return t.id == tid; });
+  if (target_thread != thread_list.end ())
+  {
+    return -1;
+  }
+  else if (tid == 0)
+  {
+    for (const auto& thread : thread_list)
+    {
+      ready_list->remove (thread);
+      thread_list->remove (thread);
+      delete[] thread.sp;
+      delete thread
+    }
+    delete ready_list;
+    delete thread_list;
+    return 0;
+  }
+  else
+  {
+    ready_list->remove (target_thread);
+    thread_list->remove (target_thread);
+    delete[] target_thread.sp;
+    delete target_thread
+    return 0;
+  }
+}
+int uthread_block (int tid)
 {
   if (tid == 0)
   {
@@ -84,47 +122,54 @@ int uthread_block(int tid)
   if (tid == running_thread.id) // blocking itself
   {
     target_thread.state = Blocked;
-    running_thread = &ready_list->front();
-    ready_list->pop_front();
+    running_thread = &ready_list->front ();
+    ready_list->pop_front ();
     running_thread->state = Running;
     return 0;
   }
-  auto target_thread = std::find_if(thread_list.begin(), thread_list.end(),
-                         [&](const Thread& t) { return t.id == tid; });
+  auto target_thread = std::find_if (thread_list.begin (), thread_list.end (),
+                                     [&] (const Thread &t)
+                                     { return t.id == tid; });
 
-  if (target_thread != thread_list.end()) {
-    if(target_thread.state == Blocked)
+  if (target_thread != thread_list.end ())
+  {
+    if (target_thread.state == Blocked)
     {
       return 0;
     }
     target_thread.state = Blocked;
-    ready_list->remove(target_thread);
-  } else {
+    ready_list->remove (target_thread);
+  }
+  else
+  {
     return -1;
   }
   return 0;
 }
 
-
-int uthread_resume(int tid)
+int uthread_resume (int tid)
 {
-  auto target_thread = std::find_if(thread_list.begin(), thread_list.end(),
-                                    [&](const Thread& t) { return t.id == tid; });
+  auto target_thread = std::find_if (thread_list.begin (), thread_list.end (),
+                                     [&] (const Thread &t)
+                                     { return t.id == tid; });
 
-  if (target_thread != thread_list.end()) {
-    if(target_thread.state != Blocked)
+  if (target_thread != thread_list.end ())
+  {
+    if (target_thread.state != Blocked)
     {
       return 0;
     }
     target_thread.state = Ready;
-    ready_list->push_back(target_thread);
-  } else {
+    ready_list->push_back (target_thread);
+  }
+  else
+  {
     return -1;
   }
   return 0;
 }
 
-int uthread_get_tid()
+int uthread_get_tid ()
 {
   return running_thread->id;
 }

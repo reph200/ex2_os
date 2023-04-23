@@ -1,5 +1,6 @@
 #include<iostream>
 #include<list>
+#include <algorithm>
 #include "uthreads.h"
 using namespace std;
 
@@ -59,7 +60,7 @@ int uthread_init (int quantum_usecs)
 
 int uthread_spawn (thread_entry_point entry_point)
 {
-  if (next_id > 100 || entry_point == NULL)
+  if (next_id > MAX_THREAD_NUM || entry_point == NULL)
   {
     return -1;
   }
@@ -71,4 +72,21 @@ int uthread_spawn (thread_entry_point entry_point)
   id = next_id;
   calulate_next_available_id ();
   return id;
+}
+
+int uthread_block(int tid)
+{
+  if (tid == 0)
+  {
+    return -1;
+  }
+  auto it = std::find_if(thread_list.begin(), thread_list.end(),
+                         [&](const Thread& t) { return t.id == tid; });
+
+  if (it != thread_list.end()) {
+    std::cout << "Thread " << tid << " found! State: " << it->state <<
+    std::endl;
+  } else {
+    return -1;
+  }
 }

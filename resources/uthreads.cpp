@@ -80,12 +80,15 @@ int uthread_block(int tid)
   {
     return -1;
   }
-  auto it = std::find_if(thread_list.begin(), thread_list.end(),
+  if (tid == running_thread.id) // blocking itself
+  {
+
+  }
+  auto target_thread = std::find_if(thread_list.begin(), thread_list.end(),
                          [&](const Thread& t) { return t.id == tid; });
 
   if (it != thread_list.end()) {
-    std::cout << "Thread " << tid << " found! State: " << it->state <<
-    std::endl;
+    target_thread
   } else {
     return -1;
   }

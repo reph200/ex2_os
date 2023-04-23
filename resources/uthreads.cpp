@@ -59,7 +59,16 @@ int uthread_init (int quantum_usecs)
 
 int uthread_spawn (thread_entry_point entry_point)
 {
+  if (next_id > 100 || entry_point == NULL)
+  {
+    return -1;
+  }
   char *stack = new char[STACK_SIZE];
   setup_thread (next_id, stack, entry_point);
+  Thread *new_thread = new Thread (next_id, Ready);
+  thread_list->push_back(new_thread);
+  ready_list->push_back(new_thread);
+  id = next_id;
   calulate_next_available_id ();
+  return id;
 }

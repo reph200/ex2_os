@@ -5,7 +5,7 @@ using namespace std;
 
 int general_quantom_size;
 int running_remaning_quantom;
-int next_id;
+int next_id = 0;
 
 enum Thread_State
 {
@@ -19,18 +19,17 @@ struct Thread
 
 } Thread;
 
-void setup_thread(int tid, char *stack, thread_entry_point entry_point)
+void setup_thread (int tid, char *stack, thread_entry_point entry_point)
 {
   // initializes env[tid] to use the right stack, and to run from the function 'entry_point', when we'll use
   // siglongjmp to jump into the thread.
-  address_t sp = (address_t) stack + STACK_SIZE - sizeof(address_t);
+  address_t sp = (address_t) stack + STACK_SIZE - sizeof (address_t);
   address_t pc = (address_t) entry_point;
-  sigsetjmp(env[tid], 1);
-  (env[tid]->__jmpbuf)[JB_SP] = translate_address(sp);
-  (env[tid]->__jmpbuf)[JB_PC] = translate_address(pc);
-  sigemptyset(&env[tid]->__saved_mask);
+  sigsetjmp (env[tid], 1);
+  (env[tid]->__jmpbuf)[JB_SP] = translate_address (sp);
+  (env[tid]->__jmpbuf)[JB_PC] = translate_address (pc);
+  sigemptyset (&env[tid]->__saved_mask);
 }
-
 
 list <Thread> thread_list;
 list <Thread> ready_list;
@@ -38,7 +37,26 @@ Thread running_thread;
 Thread main_thread;
 
 id = 0;
+void calulate_next_available_id(){
+  next_id++;
+  //notice!!!
+}
+
 int uthread_init (int quantum_usecs)
 {
-  setup_thread(0, NULL, NULL);
+  if (quantum_usecs < 0){
+    return -1;
+  }
+  Thread main_thread{next_id, Running};
+  calulate_next_available_id();
+  running_thread = main_thread;
+  thread_list = NULL
+  return 0;
+}
+
+int uthread_spawn(thread_entry_point entry_point)
+{
+  char *stack = new char[STACK_SIZE];
+  setup_thread(next_id, stack, entry_point);
+  calulate_next_available_id();
 }

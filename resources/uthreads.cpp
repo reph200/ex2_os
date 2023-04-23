@@ -61,6 +61,28 @@ void setup_thread (int tid, char *stack, thread_entry_point entry_point)
 
 
 
+void jump_to_thread(int tid)
+{
+  current_thread = tid;
+  siglongjmp(env[tid], 1);
+}
+
+/**
+ * @brief Saves the current thread state, and jumps to the other thread.
+ */
+void yield(int tid)
+{
+  current_thread = running_thread->id;
+  int ret_val = sigsetjmp(env[current_thread], 1);
+//  printf("yield: ret_val=%d\n", ret_val);
+  bool did_just_save_bookmark = ret_val == 0;
+//    bool did_jump_from_another_thread = ret_val != 0;
+  if (did_just_save_bookmark)
+  {
+    jump_to_thread(tid);
+  }
+}
+
 int id = 0;
 int get_available_id ()
 {
@@ -103,17 +125,16 @@ int uthread_spawn (thread_entry_point entry_point)
 
 int uthread_terminate (int tid)
 {
-  auto target_thread = std::find_if (thread_list->begin (), thread_list->end
-  (),
+  auto target_thread = std::find_if (thread_list.begin (), thread_list.end (),
                                      [&] (const Thread &t)
                                      { return t.id == tid; });
-  if (target_thread != thread_list->end ())
+  if (target_thread != thread_list.end ())
   {
     return -1;
   }
   else if (tid == 0)
   {
-    for (auto& thread : *thread_list)
+    for (const auto& thread : thread_list)
     {
       ready_list->remove (thread);
       thread_list->remove (thread);
@@ -129,7 +150,7 @@ int uthread_terminate (int tid)
     int new_available_id = target_thread->id;
     ready_list->remove (target_thread);
     thread_list->remove (target_thread);
-    delete[] target_thread->sp;
+    delete[] target_thread.sp;
     delete target_thread;
     auto it = std::lower_bound(available_ids.begin(), available_ids.end(), nwe_available_id);
     available_ids.insert(it, new_available_id);
@@ -148,12 +169,13 @@ int uthread_block (int tid)
     running_thread = &ready_list->front();
     ready_list->pop_front();
     running_thread->state = Running;
+    yield(running_thread->id)
     return 0;
   }
   auto target_thread = std::find_if(thread_list.begin(), thread_list.end(),
                          [&](const Thread& t) { return t.id == tid; });
 
-  if (target_thread != thread_list->end()) {
+  if (target_thread != thread_list.end()) {
     if(target_thread->state == Blocked)
     {
       return 0;

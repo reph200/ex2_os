@@ -7,8 +7,14 @@ using namespace std;
 //TODO:actually run and jump from and save threads
 int general_quantom_size;
 int running_remaning_quantom;
-int next_id = 0;
 
+list<int> available_ids;
+for (int i = 1; i <= MAX_THREAD_NUM; i++)
+{
+  available_ids.push_back(i);
+}
+
+sigjmp_buf env[MAX_THREAD_NUM];
 enum Thread_State
 {
     Running, Ready, Blocked
@@ -39,10 +45,15 @@ Thread *running_thread;
 Thread main_thread;
 
 id = 0;
-void calulate_next_available_id ()
+int get_available_id ()
 {
-  next_id++;
-  //TODO:notice!!!
+  if(my_list.empty())
+  {
+    return -1;
+  }
+  id = available_ids.front();
+  available_ids.pop_front();
+  return id;
 }
 
 int uthread_init (int quantum_usecs)
@@ -51,8 +62,7 @@ int uthread_init (int quantum_usecs)
   {
     return -1;
   }
-  main_thread = {next_id, Running};
-  calulate_next_available_id ();
+  main_thread = {0, Running};
   running_thread = &main_thread;
   thread_list = new list<Thread> ()
   ready_list = new list<Thread> ()
@@ -61,17 +71,16 @@ int uthread_init (int quantum_usecs)
 
 int uthread_spawn (thread_entry_point entry_point)
 {
-  if (next_id > MAX_THREAD_NUM || entry_point == NULL)
+  int id = get_available_id();
+  if (id == -1 || entry_point == NULL)
   {
     return -1;
   }
   char *stack = new char[STACK_SIZE];
-  setup_thread (next_id, stack, entry_point);
-  Thread *new_thread = new Thread (next_id, Ready);
+  setup_thread (id, stack, entry_point);
+  Thread *new_thread = new Thread (id, Ready);
   thread_list->push_back(new_thread);
   ready_list->push_back(new_thread);
-  id = next_id;
-  calulate_next_available_id ();
   return id;
 }
 

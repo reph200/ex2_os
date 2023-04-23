@@ -31,32 +31,35 @@ void setup_thread (int tid, char *stack, thread_entry_point entry_point)
   sigemptyset (&env[tid]->__saved_mask);
 }
 
-list <Thread> thread_list;
-list <Thread> ready_list;
+list <Thread> *thread_list;
+list <Thread> *ready_list;
 Thread running_thread;
 Thread main_thread;
 
 id = 0;
-void calulate_next_available_id(){
+void calulate_next_available_id ()
+{
   next_id++;
   //notice!!!
 }
 
 int uthread_init (int quantum_usecs)
 {
-  if (quantum_usecs < 0){
+  if (quantum_usecs < 0)
+  {
     return -1;
   }
   Thread main_thread{next_id, Running};
-  calulate_next_available_id();
+  calulate_next_available_id ();
   running_thread = main_thread;
-  thread_list = NULL
+  thread_list = new list<Thread> ()
+  ready_list = new list<Thread> ()
   return 0;
 }
 
-int uthread_spawn(thread_entry_point entry_point)
+int uthread_spawn (thread_entry_point entry_point)
 {
   char *stack = new char[STACK_SIZE];
-  setup_thread(next_id, stack, entry_point);
-  calulate_next_available_id();
+  setup_thread (next_id, stack, entry_point);
+  calulate_next_available_id ();
 }

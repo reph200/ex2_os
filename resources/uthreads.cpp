@@ -17,29 +17,6 @@ using namespace std;
 #include <sys/time.h>
 
 
-int gotit = 0;
-
-
-void timer_handler(int sig)
-{
-  gotit = 1;
-  printf("Timer expired\n");
-}
-
-
-int main(void)
-{
-  struct sigaction sa = {0};
-  struct itimerval timer;
-
-  // Install timer_handler as the signal handler for SIGVTALRM.
-  sa.sa_handler = &timer_handler;
-  if (sigaction(SIGVTALRM, &sa, NULL) < 0)
-  {
-    printf("sigaction error.");
-  }
-}
-
 
 typedef unsigned int address_t;
 #define JB_SP 4
@@ -54,14 +31,19 @@ address_t translate_address(address_t addr)
   return ret;
 }
 sigjmp_buf env[MAX_THREAD_NUM];
-
+int total_quantums = 0;
+int quantum_secs;
 int general_quantom_size;
 int running_remaning_quantom;
 
 list<int> available_ids;
-for (int i = 1; i <= MAX_THREAD_NUM; i++)
+
+void fill_available_ids()
 {
-  available_ids.push_back(i);
+  for (int i = 1; i <= MAX_THREAD_NUM; i++)
+  {
+    available_ids.push_back(i);
+  }
 }
 
 sigjmp_buf env[MAX_THREAD_NUM];
@@ -75,12 +57,49 @@ struct Thread
     int id;
     Thread_State state;
     char *sp;
+    int sleep;
+    int quantum_counter;
 
 };
 list <Thread> *thread_list;
 list <Thread> *ready_list;
 Thread *running_thread;
 Thread main_thread;
+
+int gotit = 0;
+
+
+void timer_handler(int sig)
+{
+  // quantum expired
+  running_thread.state = Ready;
+  ready_list->push_back(running_thread)
+  running_thread = &ready_list->front();
+  ready_list->pop_front();
+  running_thread->state = Running;
+  yield(running_thread->id)
+  running_thread->quantum_counter+=1;
+  wake_up_threads();
+}
+
+void wake_up_threads()
+{
+
+}
+
+int setup_timer(void)
+{
+  struct sigaction sa = {0};
+  struct itimerval timer;
+
+  // Install timer_handler as the signal handler for SIGVTALRM.
+  sa.sa_handler = &timer_handler;
+  if (sigaction(SIGVTALRM, &sa, NULL) < 0)
+  {
+    printf("sigaction error.");
+  }
+}
+
 void setup_thread (int tid, char *stack, thread_entry_point entry_point)
 {
   // initializes env[tid] to use the right stack, and to run from the function 'entry_point', when we'll use
@@ -98,6 +117,9 @@ void setup_thread (int tid, char *stack, thread_entry_point entry_point)
 void jump_to_thread(int tid)
 {
   current_thread = tid;
+  timer.it_value.tv_sec = quantum_secs;
+  timer.it_value.tv_usec = quantum_usecs - 1000000*quantum_secs;
+  total_quantums += 1;
   siglongjmp(env[tid], 1);
 }
 
@@ -135,7 +157,7 @@ int uthread_init (int quantum_usecs)
   {
     return -1;
   }
-  int quantum_secs = quantum_usecs/1000000;
+  quantum_secs = quantum_usecs/1000000;
   timer.it_value.tv_sec = quantum_secs;
   timer.it_value.tv_usec = quantum_usecs - 1000000*quantum_secs;
   timer.it_interval.tv_sec = quantum_secs;
@@ -217,7 +239,8 @@ int uthread_block (int tid)
     running_thread = &ready_list->front();
     ready_list->pop_front();
     running_thread->state = Running;
-    yield(running_thread->id)
+    yield(running_thread->id);
+    running_thread->quantum_counter+=1;
     return 0;
   }
   auto target_thread = std::find_if(thread_list.begin(), thread_list.end(),
@@ -258,4 +281,36 @@ int uthread_resume(int tid)
 int uthread_get_tid()
 {
   return running_thread->id;
+}
+
+int uthread_get_total_quantums()
+{
+  return total_quantums;
+}
+
+int uthread_get_quantums(int tid)
+{
+  auto target_thread = std::find_if(thread_list.begin(), thread_list.end(),
+                                    [&](const Thread& t) { return t.id == tid; });
+
+  if (target_thread != thread_list.end())
+  {
+    return target_thread->quantum_counter;
+  }
+  else
+  {
+    return -1;
+  }
+}
+
+
+int uthread_sleep(int num_quantums)
+{
+  running_thread.state = Blocked;
+  running_thread.sleep = num_quantums;
+  running_thread = &ready_list->front();
+  ready_list->pop_front();
+  running_thread->state = Running;
+  yield(running_thread->id);
+  running_thread->quantum_counter+=1;
 }

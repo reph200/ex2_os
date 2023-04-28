@@ -1,0 +1,28 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/mnt/c/Users/t8832181/CLionProjects/ex2_os/resources/uthreads.cpp
+iostream
+-
+list
+-
+algorithm
+-
+uthreads.h
+/mnt/c/Users/t8832181/CLionProjects/ex2_os/resources/uthreads.h
+setjmp.h
+/mnt/c/Users/t8832181/CLionProjects/ex2_os/resources/setjmp.h
+stdio.h
+-
+signal.h
+-
+sys/time.h
+-
+
+/mnt/c/Users/t8832181/CLionProjects/ex2_os/resources/uthreads.h
+

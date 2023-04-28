@@ -6,6 +6,40 @@ using namespace std;
 //TODO:ERROR messages
 //TODO:actually run and jump from and save threads
 
+/*
+ * Interval-timer demo program.
+ * Hebrew University OS course.
+ * Author: OS, os@cs.huji.ac.il
+ */
+
+#include <stdio.h>
+#include <signal.h>
+#include <sys/time.h>
+
+
+int gotit = 0;
+
+
+void timer_handler(int sig)
+{
+  gotit = 1;
+  printf("Timer expired\n");
+}
+
+
+int main(void)
+{
+  struct sigaction sa = {0};
+  struct itimerval timer;
+
+  // Install timer_handler as the signal handler for SIGVTALRM.
+  sa.sa_handler = &timer_handler;
+  if (sigaction(SIGVTALRM, &sa, NULL) < 0)
+  {
+    printf("sigaction error.");
+  }
+}
+
 
 typedef unsigned int address_t;
 #define JB_SP 4
@@ -101,8 +135,22 @@ int uthread_init (int quantum_usecs)
   {
     return -1;
   }
+  int quantum_secs = quantum_usecs/1000000;
+  timer.it_value.tv_sec = quantum_secs;
+  timer.it_value.tv_usec = quantum_usecs - 1000000*quantum_secs;
+  timer.it_interval.tv_sec = quantum_secs;
+  timer.it_interval.tv_usec = quantum_usecs - 1000000*quantum_secs;
   main_thread = {0, Running};
   running_thread = &main_thread;
+
+  //TODO: Start a virtual timer. It counts down whenever this process is
+  // executing.
+  if (setitimer(ITIMER_VIRTUAL, &timer, NULL))
+  {
+    printf("setitimer error.");
+  }
+
+
   thread_list = new list<Thread> ()
   ready_list = new list<Thread> ()
   return 0;

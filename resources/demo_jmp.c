@@ -121,7 +121,7 @@ void thread1(void)
 }
 
 
-void setup_thread(int tid, char *stack, thread_entry_point entry_point)
+void setup_thread(int tid, char* stack, thread_entry_point entry_point)
 {
     // initializes env[tid] to use the right stack, and to run from the function 'entry_point', when we'll use
     // siglongjmp to jump into the thread.

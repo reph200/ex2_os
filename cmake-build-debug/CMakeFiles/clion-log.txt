@@ -1,4 +1,28 @@
 C:\Windows\system32\wsl.exe --distribution Ubuntu --exec /bin/bash -c "export CLION_IDE=TRUE && export JETBRAINS_IDE=TRUE && cd /mnt/c/Users/t8832181/CLionProjects/ex2_os/cmake-build-debug && /usr/bin/cmake -DCMAKE_BUILD_TYPE=Debug -G 'CodeBlocks - Unix Makefiles' /mnt/c/Users/t8832181/CLionProjects/ex2_os; exitcode=$?; sleep 0.001; (exit $exitcode)"
 -- Configuring done
 -- Generating done
+-- Build files have been written to: /mnt/c/Users/t8832181/CLionProjects/ex2_os/cmake-build-debug/tests/googletest-download
+[ 11%] Performing update step for 'googletest'
+From https://github.com/google/googletest
+   0bdaac5a..797b0ad2  main       -> origin/main
+First, rewinding head to replay your work on top of it...
+Fast-forwarded main to origin/main.
+[ 22%] No configure step for 'googletest'
+[ 33%] No build step for 'googletest'
+[ 44%] No install step for 'googletest'
+[ 55%] No test step for 'googletest'
+[ 66%] Completed 'googletest'
+[100%] Built target googletest
+-- Found Python: /usr/bin/python3.8 (found version "3.8.10") found components: Interpreter 
+-- Looking for pthread.h
+-- Looking for pthread.h - found
+-- Performing Test CMAKE_HAVE_LIBC_PTHREAD
+-- Performing Test CMAKE_HAVE_LIBC_PTHREAD - Failed
+-- Looking for pthread_create in pthreads
+-- Looking for pthread_create in pthreads - not found
+-- Looking for pthread_create in pthread
+-- Looking for pthread_create in pthread - found
+-- Found Threads: TRUE  
+-- Configuring done
+-- Generating done
 -- Build files have been written to: /mnt/c/Users/t8832181/CLionProjects/ex2_os/cmake-build-debug

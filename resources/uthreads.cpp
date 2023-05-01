@@ -7,6 +7,7 @@ using namespace std;
 //TODO:ERROR messages
 //TODO:actually run and jump from and save threads
 //handle when action called on main thread..
+//maybe sleep should start next quantum?
 
 /*
  * Interval-timer demo program.
@@ -101,7 +102,6 @@ void setup_thread (int tid, char *stack, thread_entry_point entry_point)
 
 void jump_to_thread (int tid)
 {
-  running_thread->id = tid;
   timer.it_value.tv_sec = quantum / 1000000;
   timer.it_value.tv_usec = quantum - 1000000 * timer.it_value.tv_sec;
   total_quantums += 1;
@@ -111,15 +111,21 @@ void jump_to_thread (int tid)
 /**
  * @brief Saves the current thread state, and jumps to the other thread.
  */
-void yield (int tid)
+void context_switch ()
 {
+  // handle external defined
+  running_thread = ready_list->front ();
+  ready_list->pop_front ();
+  running_thread->state = Running;
+  running_thread->quantum_counter += 1;
+
   int ret_val = sigsetjmp (env[running_thread->id], 1);
-//  printf("yield: ret_val=%d\n", ret_val);
+//  printf("context_switch: ret_val=%d\n", ret_val);
   bool did_just_save_bookmark = ret_val == 0;
 //    bool did_jump_from_another_thread = ret_val != 0;
   if (did_just_save_bookmark)
   {
-    jump_to_thread (tid);
+    jump_to_thread (running_thread->id);
   }
 }
 
@@ -139,12 +145,8 @@ void timer_handler (int sig)
   //TODO:handle main (id=0)
   // quantum expired
   running_thread->state = Ready;
-  ready_list->push_back (running_thread); // without * I think
-  running_thread = ready_list->front ();
-  ready_list->pop_front ();
-  running_thread->state = Running;
-  yield (running_thread->id);
-  running_thread->quantum_counter += 1;
+  ready_list->push_back (running_thread);
+  context_switch ();
   wake_up_threads ();
 }
 
@@ -259,10 +261,7 @@ int uthread_block (int tid)
   {
     running_thread->state = Blocked;
     running_thread->flag_blocked = 1;
-    running_thread = ready_list->front ();
-    ready_list->pop_front ();
-    running_thread->state = Running;
-    yield (running_thread->id);
+    context_switch ();
     running_thread->quantum_counter += 1;
     return 0;
   }
@@ -323,11 +322,8 @@ int uthread_sleep (int num_quantums)
     return -1;
   }
   running_thread->state = Blocked;
-  running_thread->sleep = num_quantums;
-  running_thread = ready_list->front ();
-  ready_list->pop_front ();
-  running_thread->state = Running;
-  yield (running_thread->id);
+  running_thread->sleep = num_quantums + 1;
+  context_switch ();
   running_thread->quantum_counter += 1;
 }
 

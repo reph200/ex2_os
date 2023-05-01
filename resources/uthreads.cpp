@@ -49,8 +49,8 @@ struct Thread
 };
 
 // defining variables
-list <Thread> *thread_list;
-list <Thread> *ready_list;
+list <Thread*> *thread_list;
+list <Thread*> *ready_list;
 Thread *running_thread;
 Thread main_thread;
 sigjmp_buf env[MAX_THREAD_NUM];
@@ -64,6 +64,7 @@ int available_id = 0;
 
 void fill_available_ids ()
 {
+  available_ids.clear();
   for (int i = 1; i <= MAX_THREAD_NUM; i++)
   {
     available_ids.push_back (i);
@@ -72,16 +73,16 @@ void fill_available_ids ()
 
 void wake_up_threads ()
 {
-  for (auto const &thread: thread_list)
+  for (auto const &thread: *thread_list)
   {
-    if (thread.sleep > 0)
+    if (thread->sleep > 0)
     {
-      thread.sleep -= 1;
+      thread->sleep -= 1;
     }
-    if (thread.sleep == 0 && thread.flag_blocked == 0)
+    if (thread->sleep == 0 && thread->flag_blocked == 0)
     {
-      thread.state = Ready;
-      ready_list->push_back (&thread);
+      thread->state = Ready;
+      ready_list->push_back (thread);
     }
   }
 }
@@ -112,8 +113,7 @@ void jump_to_thread (int tid)
  */
 void yield (int tid)
 {
-  current_thread_id = running_thread->id;
-  int ret_val = sigsetjmp (env[current_thread_id], 1);
+  int ret_val = sigsetjmp (env[running_thread->id], 1);
 //  printf("yield: ret_val=%d\n", ret_val);
   bool did_just_save_bookmark = ret_val == 0;
 //    bool did_jump_from_another_thread = ret_val != 0;
@@ -139,8 +139,8 @@ void timer_handler (int sig)
   //TODO:handle main (id=0)
   // quantum expired
   running_thread->state = Ready;
-  ready_list->push_back (*running_thread); // without * I think
-  running_thread = &ready_list->front ();
+  ready_list->push_back (running_thread); // without * I think
+  running_thread = ready_list->front ();
   ready_list->pop_front ();
   running_thread->state = Running;
   yield (running_thread->id);
@@ -186,8 +186,8 @@ int uthread_init (int quantum_usecs)
     printf ("setitimer error.");
   }
 
-  thread_list = new list<Thread> ();
-  ready_list = new list<Thread> ();
+  thread_list = new list<Thread*> ();
+  ready_list = new list<Thread*> ();
   return 0;
 }
 
@@ -201,8 +201,8 @@ int uthread_spawn (thread_entry_point entry_point)
   char *stack = new char[STACK_SIZE];
   setup_thread (id, stack, entry_point);
   Thread *new_thread = new Thread{id, Ready, stack};
-  thread_list->push_back (*new_thread); // about the *...
-  ready_list->push_back (*new_thread); // same
+  thread_list->push_back (new_thread); // about the *...
+  ready_list->push_back (new_thread); // same
   return id;
 }
 
@@ -211,33 +211,37 @@ int uthread_terminate (int tid)
   auto target_thread = std::find_if (thread_list->begin (), thread_list->end (),
                                      [&] (const Thread &t)
                                      { return t.id == tid; });
-  if (target_thread != thread_list->end ())
+  // if thread with this id does not exist in thread list
+  if (target_thread == thread_list->end ())
   {
     return -1;
   }
+  //if thread is the main-thread
   else if (tid == 0)
   {
-    for (auto thread: *thread_list) // not (const auto &thread: thread_list)?
+    for (const auto thread: *thread_list) // thread_list)?
     {
       ready_list->remove (thread);
       thread_list->remove (thread);
-      delete[] thread.sp;
-      delete &thread; //make sure to delete correctly
+      delete[] thread->sp;
+      delete thread;
     }
     delete ready_list;
     delete thread_list;
-    return 0;
+    fill_available_ids();
+    exit(0);
   }
 
     //not main thread
   else
   {
-    int new_available_id = target_thread->id;
-    ready_list->remove (target_thread.operator* ());
-    thread_list->remove (target_thread.operator* ()); //why? target_thread
+    Thread* found_thread = *target_thread;
+    int new_available_id = (found_thread)->id;
+    ready_list->remove (found_thread);
+    thread_list->remove (found_thread);
     // is a pointer
-    delete[] target_thread->sp;
-    delete &target_thread.operator* (); //what? was delete target_thread;
+    delete[] found_thread->sp;
+    delete found_thread;
     auto it = std::lower_bound (available_ids.begin (), available_ids.end (),
                                 new_available_id);
     available_ids.insert (it, new_available_id);
@@ -255,7 +259,7 @@ int uthread_block (int tid)
   {
     running_thread->state = Blocked;
     running_thread->flag_blocked = 1;
-    running_thread = &ready_list->front ();
+    running_thread = ready_list->front ();
     ready_list->pop_front ();
     running_thread->state = Running;
     yield (running_thread->id);
@@ -266,15 +270,16 @@ int uthread_block (int tid)
                                      [&] (const Thread &t)
                                      { return t.id == tid; });
 
-  if (target_thread != thread_list.end ())
+  if (target_thread != thread_list->end ())
   {
-    if (target_thread->state == Blocked)
+    Thread* found_thread = *target_thread;
+    if (found_thread->state == Blocked)
     {
       return 0;
     }
-    target_thread->state = Blocked;
-    target_thread->flag_blocked = 1;
-    ready_list->remove (target_thread);
+    found_thread->state = Blocked;
+    found_thread->flag_blocked = 1;
+    ready_list->remove (found_thread);
   }
   else
   {
@@ -285,21 +290,23 @@ int uthread_block (int tid)
 
 int uthread_resume (int tid)
 {
-  auto target_thread = std::find_if (thread_list.begin (), thread_list.end (),
+  auto target_thread = std::find_if (thread_list->begin (), thread_list->end
+  (),
                                      [&] (const Thread &t)
                                      { return t.id == tid; });
 
-  if (target_thread != thread_list.end ())
+  if (target_thread != thread_list->end ())
   {
-    if (target_thread->state != Blocked)
+    Thread* found_thread = *target_thread;
+    if (found_thread->state != Blocked)
     {
       return 0;
     }
-    target_thread->flag_blocked = 0;
-    if (target_thread->sleep == 0)
+    found_thread->flag_blocked = 0;
+    if (found_thread->sleep == 0)
     {
-      target_thread->state = Ready;
-      ready_list->push_back (target_thread);
+      found_thread->state = Ready;
+      ready_list->push_back (found_thread);
     }
   }
   else
@@ -315,9 +322,9 @@ int uthread_sleep (int num_quantums)
   {
     return -1;
   }
-  running_thread.state = Blocked;
-  running_thread.sleep = num_quantums;
-  running_thread = &ready_list->front ();
+  running_thread->state = Blocked;
+  running_thread->sleep = num_quantums;
+  running_thread = ready_list->front ();
   ready_list->pop_front ();
   running_thread->state = Running;
   yield (running_thread->id);
@@ -336,13 +343,14 @@ int uthread_get_total_quantums ()
 
 int uthread_get_quantums (int tid)
 {
-  auto target_thread = std::find_if (thread_list.begin (), thread_list.end (),
+  auto target_thread = std::find_if (thread_list->begin (), thread_list->end
+  (),
                                      [&] (const Thread &t)
                                      { return t.id == tid; });
 
-  if (target_thread != thread_list.end ())
+  if (target_thread != thread_list->end ())
   {
-    return target_thread->quantum_counter;
+    return (*target_thread)->quantum_counter;
   }
   else
   {

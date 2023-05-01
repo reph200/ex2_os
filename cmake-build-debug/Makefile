@@ -56,52 +56,6 @@ CMAKE_BINARY_DIR = /mnt/c/Users/t8832181/CLionProjects/ex2_os/cmake-build-debug
 #=============================================================================
 # Targets provided globally by CMake.
 
-# Special rule for the target install/strip
-install/strip: preinstall
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "Installing the project stripped..."
-	/usr/bin/cmake -DCMAKE_INSTALL_DO_STRIP=1 -P cmake_install.cmake
-.PHONY : install/strip
-
-# Special rule for the target install/strip
-install/strip/fast: preinstall/fast
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "Installing the project stripped..."
-	/usr/bin/cmake -DCMAKE_INSTALL_DO_STRIP=1 -P cmake_install.cmake
-.PHONY : install/strip/fast
-
-# Special rule for the target install/local
-install/local: preinstall
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "Installing only the local directory..."
-	/usr/bin/cmake -DCMAKE_INSTALL_LOCAL_ONLY=1 -P cmake_install.cmake
-.PHONY : install/local
-
-# Special rule for the target install/local
-install/local/fast: preinstall/fast
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "Installing only the local directory..."
-	/usr/bin/cmake -DCMAKE_INSTALL_LOCAL_ONLY=1 -P cmake_install.cmake
-.PHONY : install/local/fast
-
-# Special rule for the target install
-install: preinstall
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "Install the project..."
-	/usr/bin/cmake -P cmake_install.cmake
-.PHONY : install
-
-# Special rule for the target install
-install/fast: preinstall/fast
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "Install the project..."
-	/usr/bin/cmake -P cmake_install.cmake
-.PHONY : install/fast
-
-# Special rule for the target list_install_components
-list_install_components:
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "Available install components are: \"Unspecified\""
-.PHONY : list_install_components
-
-# Special rule for the target list_install_components
-list_install_components/fast: list_install_components
-
-.PHONY : list_install_components/fast
-
 # Special rule for the target rebuild_cache
 rebuild_cache:
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "Running CMake to regenerate build system..."
@@ -157,82 +111,44 @@ depend:
 .PHONY : depend
 
 #=============================================================================
-# Target rules for targets named uthreads
+# Target rules for targets named ex2_os
 
 # Build rule for target.
-uthreads: cmake_check_build_system
-	$(MAKE) -f CMakeFiles/Makefile2 uthreads
-.PHONY : uthreads
+ex2_os: cmake_check_build_system
+	$(MAKE) -f CMakeFiles/Makefile2 ex2_os
+.PHONY : ex2_os
 
 # fast build rule for target.
-uthreads/fast:
-	$(MAKE) -f CMakeFiles/uthreads.dir/build.make CMakeFiles/uthreads.dir/build
-.PHONY : uthreads/fast
+ex2_os/fast:
+	$(MAKE) -f CMakeFiles/ex2_os.dir/build.make CMakeFiles/ex2_os.dir/build
+.PHONY : ex2_os/fast
 
-#=============================================================================
-# Target rules for targets named theTests
+resources/main.o: resources/main.cpp.o
 
-# Build rule for target.
-theTests: cmake_check_build_system
-	$(MAKE) -f CMakeFiles/Makefile2 theTests
-.PHONY : theTests
+.PHONY : resources/main.o
 
-# fast build rule for target.
-theTests/fast:
-	$(MAKE) -f tests/CMakeFiles/theTests.dir/build.make tests/CMakeFiles/theTests.dir/build
-.PHONY : theTests/fast
+# target to build an object file
+resources/main.cpp.o:
+	$(MAKE) -f CMakeFiles/ex2_os.dir/build.make CMakeFiles/ex2_os.dir/resources/main.cpp.o
+.PHONY : resources/main.cpp.o
 
-#=============================================================================
-# Target rules for targets named gmock_main
+resources/main.i: resources/main.cpp.i
 
-# Build rule for target.
-gmock_main: cmake_check_build_system
-	$(MAKE) -f CMakeFiles/Makefile2 gmock_main
-.PHONY : gmock_main
+.PHONY : resources/main.i
 
-# fast build rule for target.
-gmock_main/fast:
-	$(MAKE) -f tests/googletest-build/googlemock/CMakeFiles/gmock_main.dir/build.make tests/googletest-build/googlemock/CMakeFiles/gmock_main.dir/build
-.PHONY : gmock_main/fast
+# target to preprocess a source file
+resources/main.cpp.i:
+	$(MAKE) -f CMakeFiles/ex2_os.dir/build.make CMakeFiles/ex2_os.dir/resources/main.cpp.i
+.PHONY : resources/main.cpp.i
 
-#=============================================================================
-# Target rules for targets named gmock
+resources/main.s: resources/main.cpp.s
 
-# Build rule for target.
-gmock: cmake_check_build_system
-	$(MAKE) -f CMakeFiles/Makefile2 gmock
-.PHONY : gmock
+.PHONY : resources/main.s
 
-# fast build rule for target.
-gmock/fast:
-	$(MAKE) -f tests/googletest-build/googlemock/CMakeFiles/gmock.dir/build.make tests/googletest-build/googlemock/CMakeFiles/gmock.dir/build
-.PHONY : gmock/fast
-
-#=============================================================================
-# Target rules for targets named gtest_main
-
-# Build rule for target.
-gtest_main: cmake_check_build_system
-	$(MAKE) -f CMakeFiles/Makefile2 gtest_main
-.PHONY : gtest_main
-
-# fast build rule for target.
-gtest_main/fast:
-	$(MAKE) -f tests/googletest-build/googletest/CMakeFiles/gtest_main.dir/build.make tests/googletest-build/googletest/CMakeFiles/gtest_main.dir/build
-.PHONY : gtest_main/fast
-
-#=============================================================================
-# Target rules for targets named gtest
-
-# Build rule for target.
-gtest: cmake_check_build_system
-	$(MAKE) -f CMakeFiles/Makefile2 gtest
-.PHONY : gtest
-
-# fast build rule for target.
-gtest/fast:
-	$(MAKE) -f tests/googletest-build/googletest/CMakeFiles/gtest.dir/build.make tests/googletest-build/googletest/CMakeFiles/gtest.dir/build
-.PHONY : gtest/fast
+# target to generate assembly for a file
+resources/main.cpp.s:
+	$(MAKE) -f CMakeFiles/ex2_os.dir/build.make CMakeFiles/ex2_os.dir/resources/main.cpp.s
+.PHONY : resources/main.cpp.s
 
 resources/uthreads.o: resources/uthreads.cpp.o
 
@@ -240,7 +156,7 @@ resources/uthreads.o: resources/uthreads.cpp.o
 
 # target to build an object file
 resources/uthreads.cpp.o:
-	$(MAKE) -f CMakeFiles/uthreads.dir/build.make CMakeFiles/uthreads.dir/resources/uthreads.cpp.o
+	$(MAKE) -f CMakeFiles/ex2_os.dir/build.make CMakeFiles/ex2_os.dir/resources/uthreads.cpp.o
 .PHONY : resources/uthreads.cpp.o
 
 resources/uthreads.i: resources/uthreads.cpp.i
@@ -249,7 +165,7 @@ resources/uthreads.i: resources/uthreads.cpp.i
 
 # target to preprocess a source file
 resources/uthreads.cpp.i:
-	$(MAKE) -f CMakeFiles/uthreads.dir/build.make CMakeFiles/uthreads.dir/resources/uthreads.cpp.i
+	$(MAKE) -f CMakeFiles/ex2_os.dir/build.make CMakeFiles/ex2_os.dir/resources/uthreads.cpp.i
 .PHONY : resources/uthreads.cpp.i
 
 resources/uthreads.s: resources/uthreads.cpp.s
@@ -258,7 +174,7 @@ resources/uthreads.s: resources/uthreads.cpp.s
 
 # target to generate assembly for a file
 resources/uthreads.cpp.s:
-	$(MAKE) -f CMakeFiles/uthreads.dir/build.make CMakeFiles/uthreads.dir/resources/uthreads.cpp.s
+	$(MAKE) -f CMakeFiles/ex2_os.dir/build.make CMakeFiles/ex2_os.dir/resources/uthreads.cpp.s
 .PHONY : resources/uthreads.cpp.s
 
 # Help Target
@@ -267,18 +183,12 @@ help:
 	@echo "... all (the default if no target is provided)"
 	@echo "... clean"
 	@echo "... depend"
-	@echo "... install/strip"
-	@echo "... install/local"
-	@echo "... install"
-	@echo "... list_install_components"
 	@echo "... rebuild_cache"
 	@echo "... edit_cache"
-	@echo "... uthreads"
-	@echo "... theTests"
-	@echo "... gmock_main"
-	@echo "... gmock"
-	@echo "... gtest_main"
-	@echo "... gtest"
+	@echo "... ex2_os"
+	@echo "... resources/main.o"
+	@echo "... resources/main.i"
+	@echo "... resources/main.s"
 	@echo "... resources/uthreads.o"
 	@echo "... resources/uthreads.i"
 	@echo "... resources/uthreads.s"
